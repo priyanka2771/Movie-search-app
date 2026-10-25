@@ -1,24 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 
-function MovieModal({ imdbID, apiKey, onClose }) {
-  const [details, setDetails] = useState(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    setDetails(null);
-    setError("");
-
-    fetch(`https://www.omdbapi.com/?apikey=${apiKey}&i=${imdbID}&plot=full`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.Response === "True") {
-          setDetails(data);
-        } else {
-          setError(data.Error || "Could not load movie details.");
-        }
-      })
-      .catch(() => setError("Something went wrong. Please try again."));
-  }, [imdbID, apiKey]);
+// `movie` arrives already loaded (the card fetches it), or as { Error } on failure
+function MovieModal({ movie, onClose }) {
+  const details = movie.Error ? null : movie;
+  const error = movie.Error;
 
   // Close on Escape and stop the page behind from scrolling
   useEffect(() => {
@@ -45,13 +30,6 @@ function MovieModal({ imdbID, apiKey, onClose }) {
         <button className="modal-close" onClick={onClose} aria-label="Close">
           ✕
         </button>
-
-        {!details && !error && (
-          <div className="modal-status">
-            <div className="spinner-border text-warning" role="status" />
-            <p>Loading details...</p>
-          </div>
-        )}
 
         {error && (
           <div className="modal-status">

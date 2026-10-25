@@ -1,126 +1,58 @@
-import React, { useState, useEffect, useCallback } from "react";
-import SearchBar from "./components/SearchBar";
-import MovieCard from "./components/MovieCard";
-import MovieModal from "./components/MovieModal";
+import React, { useState, useEffect } from "react";
+import Home from "./pages/Home";
+import SearchPage from "./pages/SearchPage";
 
-const QUICK_SEARCHES = ["Batman", "Avengers", "Harry Potter", "Star Wars", "Inception", "Spider-Man"];
+const DEFAULT_SEARCH = "batman";
+
+// Hash routes (#/ and #/search?q=...) work on GitHub Pages without server config
+function readRoute() {
+  const [path, query = ""] = window.location.hash.replace(/^#/, "").split("?");
+  return {
+    page: path === "/search" ? "search" : "home",
+    term: new URLSearchParams(query).get("q") || DEFAULT_SEARCH,
+  };
+}
 
 function App() {
-  const [movies, setMovies] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("batman");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [selectedId, setSelectedId] = useState(null);
-  const closeModal = useCallback(() => setSelectedId(null), []);
-
-  const API_KEY = "e7faec0f";
+  const [route, setRoute] = useState(readRoute);
 
   useEffect(() => {
-    setLoading(true);
-    setError("");
+    const handleHashChange = () => {
+      setRoute(readRoute());
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
-    fetch(
-      `https://www.omdbapi.com/?apikey=${API_KEY}&s=${encodeURIComponent(searchTerm)}`,
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.Search) {
-          const uniqueMovies = [
-            ...new Map(
-              data.Search.map((movie) => [movie.imdbID, movie]),
-            ).values(),
-          ];
-
-          const sortedMovies = uniqueMovies.sort(
-            (a, b) => parseInt(b.Year) - parseInt(a.Year),
-          );
-
-          setMovies(sortedMovies);
-        } else {
-          setMovies([]);
-        }
-      })
-      .catch(() => {
-        setMovies([]);
-        setError("Something went wrong. Please check your connection.");
-      })
-      .finally(() => setLoading(false));
-  }, [searchTerm]);
+  const goToSearch = (term = DEFAULT_SEARCH) => {
+    window.location.hash = `/search?q=${encodeURIComponent(term)}`;
+  };
 
   return (
     <div className="app min-vh-100 text-white">
       {/* Navbar */}
       <nav className="navbar app-navbar px-4 sticky-top">
-        <span className="navbar-brand brand fw-bold">
+        <a href="#/" className="navbar-brand brand fw-bold">
           🎬 Movie<span className="text-accent">Explorer</span>
-        </span>
+        </a>
+        <div className="nav-links">
+          <a href="#/" className={route.page === "home" ? "active" : ""}>
+            Home
+          </a>
+          <a
+            href="#/search"
+            className={route.page === "search" ? "active" : ""}
+          >
+            Search
+          </a>
+        </div>
       </nav>
 
-      {/* Hero */}
-      <header className="hero text-center">
-        <div className="container">
-          <h1 className="hero-title">
-            Find your next <span className="text-gradient">favorite film</span>
-          </h1>
-          <p className="hero-subtitle">
-            Search thousands of movies and series in seconds.
-          </p>
-
-          <SearchBar setSearchTerm={setSearchTerm} />
-
-          <div className="quick-searches">
-            {QUICK_SEARCHES.map((term) => (
-              <button
-                key={term}
-                type="button"
-                className={`chip ${
-                  searchTerm.toLowerCase() === term.toLowerCase() ? "active" : ""
-                }`}
-                onClick={() => setSearchTerm(term)}
-              >
-                {term}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
-
-      <main className="container pb-5">
-        {!loading && movies.length > 0 && (
-          <h2 className="results-heading">
-            Results for <span className="text-accent">"{searchTerm}"</span>
-            <span className="results-count">{movies.length} titles</span>
-          </h2>
-        )}
-
-        <div className="row g-4">
-          {loading
-            ? Array.from({ length: 10 }).map((_, i) => (
-                <div className="col-6 col-md-4 col-lg-3 col-xl-2" key={i}>
-                  <div className="skeleton-card" />
-                </div>
-              ))
-            : movies.map((movie) => (
-                <div
-                  className="col-6 col-md-4 col-lg-3 col-xl-2"
-                  key={movie.imdbID}
-                >
-                  <MovieCard movie={movie} onSelect={setSelectedId} />
-                </div>
-              ))}
-        </div>
-
-        {!loading && movies.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon">🎥</div>
-            <h3>{error ? "Oops!" : "No movies found"}</h3>
-            <p>{error || "Try another title or pick one of the suggestions above."}</p>
-          </div>
-        )}
-      </main>
-
-      {selectedId && (
-        <MovieModal imdbID={selectedId} apiKey={API_KEY} onClose={closeModal} />
+      {route.page === "home" ? (
+        <Home onSearch={goToSearch} />
+      ) : (
+        <SearchPage searchTerm={route.term} setSearchTerm={goToSearch} />
       )}
 
       <footer className="app-footer">

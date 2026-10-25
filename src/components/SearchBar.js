@@ -6,24 +6,23 @@ function SearchBar({ setSearchTerm }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (input.trim() !== "") {
-      setSearchTerm(input);
+      setSearchTerm(input.trim());
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="d-flex justify-content-center mb-4"
-    >
+    <form onSubmit={handleSubmit} className="search-bar">
+      <span className="search-icon" aria-hidden="true">
+        🔍
+      </span>
       <input
         type="text"
-        className="form-control w-50 rounded-pill px-4 py-2 shadow-sm"
-        placeholder="Search for movies..."
+        placeholder="Search for movies, series..."
         value={input}
         onChange={(e) => setInput(e.target.value)}
+        aria-label="Search movies"
       />
-
-      <button className="btn btn-warning ms-2 px-4 rounded-pill fw-semibold">
+      <button type="submit" className="search-btn">
         Search
       </button>
     </form>

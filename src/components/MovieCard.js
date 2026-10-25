@@ -1,28 +1,43 @@
-import React from "react";
+import React, { useState } from "react";
 
-function MovieCard({ movie }) {
+function MovieCard({ movie, onSelect }) {
+  const [imgError, setImgError] = useState(false);
+  const hasPoster = movie.Poster !== "N/A" && !imgError;
+
   return (
-    <div className="card movie-card bg-secondary text-white border-0 h-100">
-      <div className="position-relative">
-        <img
-          src={
-            movie.Poster !== "N/A"
-              ? movie.Poster
-              : "https://via.placeholder.com/300"
-          }
-          className="card-img-top"
-          alt={movie.Title}
-        />
+    <button
+      type="button"
+      className="movie-card"
+      onClick={() => onSelect(movie.imdbID)}
+      title={movie.Title}
+    >
+      <div className="poster-wrap">
+        {hasPoster ? (
+          <img
+            src={movie.Poster}
+            alt={movie.Title}
+            loading="lazy"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="poster-fallback">
+            <span>🎞️</span>
+            <small>No poster</small>
+          </div>
+        )}
 
-        <div className="overlay">
-          <span className="badge bg-warning text-dark">{movie.Year}</span>
+        <span className="year-badge">{movie.Year}</span>
+        <span className="type-badge">{movie.Type}</span>
+
+        <div className="poster-overlay">
+          <span className="view-btn">View details</span>
         </div>
       </div>
 
-      <div className="card-body text-center">
-        <h6 className="card-title fw-semibold">{movie.Title}</h6>
+      <div className="movie-info">
+        <h6 className="movie-title">{movie.Title}</h6>
       </div>
-    </div>
+    </button>
   );
 }
 
